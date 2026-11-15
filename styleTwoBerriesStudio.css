@@ -202,7 +202,7 @@ background:radial-gradient(circle at 50% 38%,rgba(255,255,255,.2),rgba(255,255,2
 @media(max-width:420px){.brand-name{display:none}}
 @media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
 
-/* ===== Aggiunte: home, About, Game, Social, cursore ===== */
+/* ===== Aggiunte: home, About, Game, Social ===== */
 .para{font-size:1.05rem;max-width:52ch;margin:0 0 2.2em}
 body[data-polvere] .page{position:relative;z-index:1}
 #polvere{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
