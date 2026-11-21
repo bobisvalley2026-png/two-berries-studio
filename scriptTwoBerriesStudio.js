@@ -130,9 +130,9 @@ function rimMat(hex, k) {   // bordo luminoso tipo vetro (Fresnel)
 }
 function glassShell(group, tint, rim) {   // guscio trasparente intorno alla bacca: tinta + riflessi dello studio + bordo
   var sg = new THREE.SphereGeometry(1, 96, 64);
-  var body = new THREE.Mesh(sg, new THREE.MeshPhysicalMaterial({ color: tint, transparent: true, opacity: .2, roughness: .08, clearcoat: 1, depthWrite: false })); body.renderOrder = 1;
-  var spec = new THREE.Mesh(sg, new THREE.MeshStandardMaterial({ color: 0x9aa0c0, metalness: 1, roughness: .03, envMapIntensity: 1.7, transparent: true, opacity: .6, blending: THREE.AdditiveBlending, depthWrite: false })); spec.renderOrder = 2;
-  var edge = new THREE.Mesh(sg, rimMat(rim, 1.5)); edge.scale.setScalar(1.02); edge.renderOrder = 3;
+  var body = new THREE.Mesh(sg, new THREE.MeshPhysicalMaterial({ color: tint, transparent: true, opacity: .26, roughness: .08, clearcoat: 1, depthWrite: false })); body.renderOrder = 2;
+  var spec = new THREE.Mesh(sg, new THREE.MeshStandardMaterial({ color: 0x6a708c, metalness: 1, roughness: .03, envMapIntensity: 1.0, transparent: true, opacity: .14, blending: THREE.AdditiveBlending, depthWrite: false })); spec.renderOrder = 3;
+  var edge = new THREE.Mesh(sg, rimMat(rim, .55)); edge.scale.setScalar(1.02); edge.renderOrder = 4;
   group.add(body, spec, edge);
 }
 var canvas = document.getElementById('hero3d');
@@ -142,36 +142,45 @@ if (canvas && window.THREE) {
   var key = new THREE.DirectionalLight(0xffffff, 1.5); key.position.set(-4, 6, 6); S.add(key);
   var rimL = new THREE.DirectionalLight(0x8fa0ff, 1.2); rimL.position.set(6, 1, -4); S.add(rimL);
 
-  // Interno blu: mirtillo con buccia cerosa e corona di sepali
-  var bt = grain(512, 256); bt.g.fillStyle = '#1f2a8c'; bt.g.fillRect(0, 0, 512, 256); bt.scatter('#8c9bff', 2600);
-  var bumpB = grain(512, 256); bumpB.g.fillStyle = '#808080'; bumpB.g.fillRect(0, 0, 512, 256); bumpB.scatter('#ffffff', 900); bumpB.scatter('#000000', 900);
-  var mapB = new THREE.CanvasTexture(bt.c); mapB.encoding = THREE.sRGBEncoding;
-  var mBlu = new THREE.MeshPhysicalMaterial({ map: mapB, bumpMap: new THREE.CanvasTexture(bumpB.c), bumpScale: .6, roughness: .4, clearcoat: .6, clearcoatRoughness: .3, emissive: 0x0a1050, envMapIntensity: 1.1 });
-  var bluIn = new THREE.Group(), bs = new THREE.Mesh(new THREE.SphereGeometry(1, 96, 64), mBlu); bs.scale.set(1, .9, 1); bluIn.add(bs);
-  var mCal = new THREE.MeshStandardMaterial({ color: 0x0f1452, roughness: .65 });
-  var ring = new THREE.Mesh(new THREE.TorusGeometry(.2, .05, 16, 32), mCal); ring.rotation.x = Math.PI / 2; ring.position.y = .86; bluIn.add(ring);
-  for (var k = 0; k < 5; k++) {
-    var cone = new THREE.Mesh(new THREE.ConeGeometry(.09, .3, 10), mCal), a = k / 5 * 6.283;
-    cone.position.set(Math.cos(a) * .2, .93, Math.sin(a) * .2); cone.rotation.set(Math.sin(a) * .75, 0, -Math.cos(a) * .75); bluIn.add(cone);
+  // Le due bacche del logo: sfere lisce sovrapposte (blu dietro, rossa davanti), semitrasparenti, dentro un guscio di vetro
+  function berry(color, emis, opacity, order) {
+    var m = new THREE.Mesh(new THREE.SphereGeometry(1, 96, 64), new THREE.MeshPhysicalMaterial({ color: color, emissive: emis, roughness: .34, clearcoat: 1, clearcoatRoughness: .1,
+      envMapIntensity: .6, transparent: true, opacity: opacity }));
+    m.renderOrder = order; return m;
   }
-  bluIn.scale.setScalar(.66);
-  var blu = new THREE.Group(); blu.add(bluIn); glassShell(blu, 0x5a6bff, 0x7b88ff);
+  function gloss(group, col) {   // il riflesso ad arco in alto a sinistra, come nel logo
+    var th = .95, rr = Math.sin(th) * .985, zz = Math.cos(th) * .985, a0 = 1.9, len = 1.2;
+    var mat = new THREE.MeshBasicMaterial({ color: col, transparent: true, opacity: .3, depthWrite: false });
+    var arc = new THREE.Mesh(new THREE.TorusGeometry(rr, .05, 12, 48, len), mat); arc.position.z = zz; arc.rotation.z = a0; arc.renderOrder = 6; group.add(arc);
+    [a0, a0 + len].forEach(function (an) {
+      var cap = new THREE.Mesh(new THREE.SphereGeometry(.05, 16, 12), mat); cap.position.set(Math.cos(an) * rr, Math.sin(an) * rr, zz); cap.renderOrder = 6; group.add(cap);
+    });
+  }
+  var bluIn = new THREE.Group(); bluIn.add(berry(0x1c2690, 0x04061f, .82, 0)); bluIn.scale.setScalar(.93);
+  var blu = new THREE.Group(); blu.add(bluIn); glassShell(blu, 0x1f2a9a, 0x3948b8); gloss(blu, 0xdfe5ff);
 
-  // Interno rosso: bacca lucida; gambo e foglie escono dal vetro come nel logo
-  var br = grain(512, 256); br.g.fillStyle = '#808080'; br.g.fillRect(0, 0, 512, 256); br.scatter('#ffffff', 700); br.scatter('#000000', 700);
-  var mRosso = new THREE.MeshPhysicalMaterial({ color: 0xc8112c, emissive: 0x3a0310, roughness: .2, clearcoat: 1, clearcoatRoughness: .03, bumpMap: new THREE.CanvasTexture(br.c), bumpScale: .25, envMapIntensity: 1.5 });
-  var rosIn = new THREE.Group(), rs = new THREE.Mesh(new THREE.SphereGeometry(1, 96, 64), mRosso); rs.scale.set(1, .96, 1); rosIn.add(rs); rosIn.scale.setScalar(.66);
-  var rosso = new THREE.Group(); rosso.add(rosIn); glassShell(rosso, 0xff3d5a, 0xff6b80);
-  var curve = new THREE.CatmullRomCurve3([new THREE.Vector3(0, .6, 0), new THREE.Vector3(.03, .95, 0), new THREE.Vector3(.12, 1.32, 0)]);
-  rosso.add(new THREE.Mesh(new THREE.TubeGeometry(curve, 16, .035, 8), new THREE.MeshStandardMaterial({ color: 0x5a3a22, roughness: .55 })));
+  var rosIn = new THREE.Group(); rosIn.add(berry(0x7e1226, 0x110208, .74, 1)); rosIn.scale.setScalar(.93);
+  var rosso = new THREE.Group(); rosso.add(rosIn); glassShell(rosso, 0x98172d, 0xb83048); gloss(rosso, 0xffd9df);
+  blu.scale.setScalar(1); rosso.scale.setScalar(.96);
+
+  // Gambo e due foglie sopra l'incontro delle bacche, come nel logo
+  var crown = new THREE.Group();
+  var stemCurve = new THREE.CatmullRomCurve3([new THREE.Vector3(0, -.02, 0), new THREE.Vector3(-.05, .26, 0), new THREE.Vector3(-.2, .6, 0)]);
+  var mStem = new THREE.MeshStandardMaterial({ color: 0x6b4423, roughness: .55 });
+  crown.add(new THREE.Mesh(new THREE.TubeGeometry(stemCurve, 20, .045, 10), mStem));
+  var stemTip = new THREE.Mesh(new THREE.SphereGeometry(.045, 12, 10), mStem); stemTip.position.set(-.2, .6, 0); crown.add(stemTip);
   var shape = new THREE.Shape(); shape.moveTo(0, 0); shape.bezierCurveTo(.15, .38, .7, .42, 1, 0); shape.bezierCurveTo(.7, -.34, .15, -.3, 0, 0);
   var lg = new THREE.ExtrudeGeometry(shape, { depth: .02, bevelEnabled: true, bevelThickness: .012, bevelSize: .012, bevelSegments: 2, curveSegments: 20 });
-  var lp = lg.attributes.position; for (var q = 0; q < lp.count; q++) { var lx = lp.getX(q); lp.setZ(q, lp.getZ(q) + .28 * lx * lx); } lg.computeVertexNormals();
-  var mFoglia = new THREE.MeshPhysicalMaterial({ color: 0x3f9a47, roughness: .4, clearcoat: .4, clearcoatRoughness: .3, side: THREE.DoubleSide });
-  [1, -1].forEach(function (d) {
-    var f = new THREE.Mesh(lg, mFoglia); f.scale.set(d * .5, .5, .5); f.position.set(.12, 1.32, 0); f.rotation.set(-.35, d * -.25, d * .45); rosso.add(f);
+  var lp = lg.attributes.position; for (var q = 0; q < lp.count; q++) { var lx = lp.getX(q); lp.setZ(q, lp.getZ(q) + .2 * lx * lx); } lg.computeVertexNormals();
+  var mFoglia = new THREE.MeshPhysicalMaterial({ color: 0x2f7a35, emissive: 0x05180a, roughness: .4, clearcoat: .5, clearcoatRoughness: .25, envMapIntensity: .6, transparent: true, opacity: .78, side: THREE.DoubleSide });
+  var mNerv = new THREE.MeshStandardMaterial({ color: 0x1f5a27, roughness: .5, transparent: true, opacity: .8 });
+  var nerv = new THREE.TubeGeometry(new THREE.CatmullRomCurve3([new THREE.Vector3(.04, .015, .03), new THREE.Vector3(.4, .07, .06), new THREE.Vector3(.85, .02, .17)]), 20, .012, 6);
+  var leaves = [1, -1].map(function (d) {
+    var f = new THREE.Mesh(lg, mFoglia); f.scale.set(d * 1.5, .98, .9); f.position.set(0, .02, 0); f.rotation.set(-.3, d * -.2, d * .2);
+    f.add(new THREE.Mesh(nerv, mNerv)); crown.add(f); return f;
   });
-  var G = new THREE.Group(); blu.position.set(-.98, .05, 0); rosso.position.set(.98, -.1, .1); G.add(blu, rosso); S.add(G);
+  crown.position.set(0, .98, .1);
+  var G = new THREE.Group(); blu.position.set(-.56, .04, -.2); rosso.position.set(.56, -.06, .3); G.add(blu, rosso, crown); S.add(G);
 
   // Pulviscolo in sospensione
   var N = 260, pa = new Float32Array(N * 3);
@@ -187,14 +196,18 @@ if (canvas && window.THREE) {
   function loop(now) {
     if (!on) { running = false; return; }
     running = true;
-    var t = (now - t0) / 1000, kk = reduced ? 1 : ease(Math.min(t / 2, 1)), narrow = innerWidth < 700 ? .55 : .72;
+    var t = (now - t0) / 1000, kk = reduced ? 1 : ease(Math.min(t / 2, 1)), narrow = innerWidth < 700 ? .485 : .635;
     ps += (prog - ps) * .14;
     var s = ps * ps * (3 - 2 * ps);
     ry += (mouse.nx * .5 - ry) * .05; rx += (mouse.ny * .25 - rx) * .05;
     G.rotation.set(rx, ry + s * 2.2, Math.sin(t * .5) * .05);
     G.position.set(0, Math.sin(t * 1.1) * .1, s * 3);
     G.scale.setScalar(kk * narrow * (1 + s * .8));
-    blu.position.x = -.98 - s * 3.6; rosso.position.x = .98 + s * 3.6;
+    blu.position.x = -.56 - s * 3.6; rosso.position.x = .56 + s * 3.6;
+    blu.position.y = .04 + Math.sin(t * 1.1 + 1.4) * .03; rosso.position.y = -.06 + Math.sin(t * 1.1) * .03;
+    blu.scale.setScalar(1 + Math.sin(t * 1.3) * .01); rosso.scale.setScalar(.96 + Math.sin(t * 1.3 + 1) * .01);
+    crown.position.y = .98 + s * .4; crown.scale.setScalar(clamp(1 - s * 2.4, .0001, 1)); crown.rotation.z = Math.sin(t * .9) * .03;
+    leaves[0].rotation.z = .2 + Math.sin(t * 1.4) * .035; leaves[1].rotation.z = -.2 - Math.sin(t * 1.4 + .6) * .035;
     bluIn.rotation.set(t * .25, t * .35, 0); rosIn.rotation.set(-t * .2, -t * .3, 0);
     dust.rotation.y = t * .02 + mouse.nx * .08; dust.position.y = ps * 2 + Math.sin(t * .3) * .2;
     canvas.style.opacity = 1 - clamp((ps - .8) * 5, 0, 1);
