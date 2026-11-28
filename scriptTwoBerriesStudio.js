@@ -338,7 +338,7 @@ if (box && window.THREE) {
   }
 }
 
-/* ---------- Puntini bianchi sullo sfondo (About) ---------- */
+/* ---------- Puntini bianchi sullo sfondo (About, Prodotti, Social) ---------- */
 if (document.body.hasAttribute('data-polvere')) {
   var pv = document.createElement('canvas'); pv.id = 'polvere'; pv.setAttribute('aria-hidden', 'true'); document.body.insertBefore(pv, document.body.firstChild);
   var pc = pv.getContext('2d'), dots = [], dpr = Math.min(devicePixelRatio || 1, 2), pw = 0, ph = 0;

@@ -266,3 +266,9 @@ background:linear-gradient(90deg,var(--k) 0 0) no-repeat 0 0/0 100%,rgba(255,255
 .social-card.ig{--k:var(--rosso)}.social-card.tt{--k:#4658ff}
 .segui-go{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;background:var(--testo);color:var(--nero);font-size:1.2rem;transition:transform .6s var(--ease)}
 .social-card:hover .segui{background-size:100% 100%;border-color:transparent}.social-card:hover .segui-go{transform:rotate(-45deg) scale(1.1)}
+
+/* Spazi ridotti tra le sezioni: about e prodotti */
+body[data-page="about"] .section{padding:clamp(40px,6.5vw,84px) 0}
+body[data-page="prodotti"] .section{padding:clamp(48px,8vw,100px) 0}
+body[data-page="about"] .section>h2,body[data-page="prodotti"] .section>h2{margin-bottom:.4em}
+body[data-page="about"] .marq{margin-top:clamp(8px,2vw,24px)}
